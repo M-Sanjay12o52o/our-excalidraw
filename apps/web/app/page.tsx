@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import CanvasComponent from "./components/Canvas";
-import Toolbar from "./components/ToolBar";
 
 type Props = {};
 
@@ -11,8 +10,9 @@ const page = (props: Props) => {
 
   return (
     <div>
-      <Toolbar setMode={setMode} />
-      <CanvasComponent mode={mode} />
+      <button onClick={() => setMode("draw")}>Draw</button>
+      <button onClick={() => setMode("text")}>Text</button>
+      <CanvasComponent mode={mode} />{" "}
     </div>
   );
 };

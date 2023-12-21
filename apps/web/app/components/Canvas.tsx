@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface CanvasProps {
   mode: string;
@@ -8,6 +8,15 @@ const CanvasComponent: React.FC<CanvasProps> = ({ mode }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const isDrawing = useRef<boolean>(false);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [inputValue, setInputValue] = useState<string>("");
+  const [inputX, setInputX] = useState<number>(0);
+  const [inputY, setInputY] = useState<number>(0);
+
+  console.log("inputX: ", inputX);
+  console.log("inputY: ", inputY);
+  console.log("inputValue: ", inputValue);
+  console.log("isTyping: ", isTyping);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,6 +29,48 @@ const CanvasComponent: React.FC<CanvasProps> = ({ mode }) => {
     canvas.height = window.innerHeight + window.scrollY;
 
     contextRef.current = context;
+
+    const ctx = contextRef.current;
+
+    if (ctx && isTyping) {
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "black";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillText(inputValue, inputX, inputY);
+    }
+
+    const handleCanvasClick = (event: MouseEvent) => {
+      // console.log("hello from handleCanvasClick");
+      if (mode === "text") {
+        setIsTyping(true);
+        setInputX(event.clientX + window.scrollX);
+        // console.log(event.clientX + window.scrollX);
+        setInputY(event.clientY + window.scrollY);
+        // console.log(event.clientY + window.scrollY);
+      }
+    };
+
+    const handleTextInput = (event: KeyboardEvent) => {
+      // console.log("hello from handleTextInput: ", event.key);
+      if (isTyping) {
+        const key = event.key;
+        // console.log("key from if statement: ", event.key);
+        if (key === "Enter") {
+          setIsTyping(false);
+          const ctx = contextRef.current;
+          if (ctx) {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "black";
+            ctx.fillText(inputValue, inputX, inputY);
+          }
+          setInputValue("");
+        } else if (key === "Backspace") {
+          setInputValue(inputValue.slice(0, -1));
+        } else {
+          setInputValue(inputValue + key);
+        }
+      }
+    };
 
     const handleStartDrawing = (event: MouseEvent) => {
       isDrawing.current = true;
@@ -53,56 +104,24 @@ const CanvasComponent: React.FC<CanvasProps> = ({ mode }) => {
       }
     };
 
+    window.addEventListener("keydown", handleTextInput);
+    canvas.addEventListener("click", handleCanvasClick);
+
     canvas.addEventListener("mousedown", handleStartDrawing);
     canvas.addEventListener("mousemove", handleDrawing);
     canvas.addEventListener("mouseup", handleStopDrawing);
     canvas.addEventListener("mouseout", handleStopDrawing);
 
     return () => {
+      window.removeEventListener("keydown", handleTextInput);
+      canvas.removeEventListener("click", handleCanvasClick);
+
       canvas.removeEventListener("mousedown", handleStartDrawing);
       canvas.removeEventListener("mousemove", handleDrawing);
       canvas.removeEventListener("mouseup", handleStopDrawing);
       canvas.removeEventListener("mouseout", handleStopDrawing);
     };
-  }, []);
-
-  const drawShapes = (ctx: CanvasRenderingContext2D) => {
-    switch (mode) {
-      case "rectangle":
-        ctx.fillRect(10, 20, 50, 30); // Example values for a rectangle
-        break;
-
-      case "square":
-        ctx.fillRect(50, 70, 80, 80); // Example values for a square
-        break;
-
-      case "arrow":
-        // ... (implementation still needed for arrow)
-        break;
-
-      case "dottedRect":
-        ctx.setLineDash([5, 5]);
-        ctx.strokeRect(120, 10, 100, 60); // Example values for a dotted rectangle
-        ctx.setLineDash([]);
-        break;
-
-      case "dottedSquare":
-        ctx.setLineDash([5, 5]);
-        ctx.strokeRect(200, 80, 50, 50); // Example values for a dotted square
-        ctx.setLineDash([]);
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  useEffect(() => {
-    const ctx = contextRef.current;
-    if (ctx) {
-      drawShapes(ctx);
-    }
-  }, [mode]);
+  }, [mode, isTyping, inputValue, inputX, inputY]);
 
   return (
     <canvas
