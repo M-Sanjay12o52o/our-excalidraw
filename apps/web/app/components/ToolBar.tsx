@@ -13,6 +13,15 @@ const Toolbar: React.FC<ToolbarProps> = ({ setMode }) => {
     <div>
       <button onClick={() => handleModeChange("draw")}>Draw</button>
       <button onClick={() => handleModeChange("text")}>Text</button>
+      <button onClick={() => handleModeChange("rectangle")}>Rectangle</button>
+      <button onClick={() => handleModeChange("square")}>Square</button>
+      <button onClick={() => handleModeChange("arrow")}>Arrow</button>
+      <button onClick={() => handleModeChange("dottedRect")}>
+        Dotted Rectangle
+      </button>
+      <button onClick={() => handleModeChange("dottedSquare")}>
+        Dotted Square
+      </button>
     </div>
   );
 };
