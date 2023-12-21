@@ -1,22 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useEffect } from "react";
 
-interface CanvasProps {
-  mode: string;
-}
-
-const CanvasComponent: React.FC<CanvasProps> = ({ mode }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const CanvasComponent: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const isDrawing = useRef<boolean>(false);
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [inputValue, setInputValue] = useState<string>("");
-  const [inputX, setInputX] = useState<number>(0);
-  const [inputY, setInputY] = useState<number>(0);
-
-  console.log("inputX: ", inputX);
-  console.log("inputY: ", inputY);
-  console.log("inputValue: ", inputValue);
-  console.log("isTyping: ", isTyping);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -25,103 +12,50 @@ const CanvasComponent: React.FC<CanvasProps> = ({ mode }) => {
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    canvas.width = window.innerWidth + window.scrollX;
-    canvas.height = window.innerHeight + window.scrollY;
+    // setting canvas size
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // drawing logics
+    context.lineCap = "round";
+    context.strokeStyle = "black";
+    context.lineWidth = 5;
 
     contextRef.current = context;
+  }, []);
+  const startDrawing = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || !contextRef.current) return;
 
-    const ctx = contextRef.current;
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
 
-    if (ctx && isTyping) {
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "black";
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillText(inputValue, inputX, inputY);
-    }
+    const offsetX = event.nativeEvent.offsetX;
+    const offsetY = event.nativeEvent.offsetY;
 
-    const handleCanvasClick = (event: MouseEvent) => {
-      // console.log("hello from handleCanvasClick");
-      if (mode === "text") {
-        setIsTyping(true);
-        setInputX(event.clientX + window.scrollX);
-        // console.log(event.clientX + window.scrollX);
-        setInputY(event.clientY + window.scrollY);
-        // console.log(event.clientY + window.scrollY);
-      }
-    };
+    context.beginPath();
+    context.moveTo(offsetX, offsetY);
+    isDrawing.current = true;
+  };
 
-    const handleTextInput = (event: KeyboardEvent) => {
-      // console.log("hello from handleTextInput: ", event.key);
-      if (isTyping) {
-        const key = event.key;
-        // console.log("key from if statement: ", event.key);
-        if (key === "Enter") {
-          setIsTyping(false);
-          const ctx = contextRef.current;
-          if (ctx) {
-            ctx.font = "16px Arial";
-            ctx.fillStyle = "black";
-            ctx.fillText(inputValue, inputX, inputY);
-          }
-          setInputValue("");
-        } else if (key === "Backspace") {
-          setInputValue(inputValue.slice(0, -1));
-        } else {
-          setInputValue(inputValue + key);
-        }
-      }
-    };
+  const draw = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing.current || !contextRef.current) return;
 
-    const handleStartDrawing = (event: MouseEvent) => {
-      isDrawing.current = true;
-      const ctx = contextRef.current;
-      if (ctx) {
-        ctx.beginPath();
-        ctx.moveTo(
-          event.clientX + window.scrollX,
-          event.clientY + window.scrollY
-        );
-      }
-    };
+    const canvas = canvasRef.current;
+    const context = contextRef.current;
 
-    const handleDrawing = (event: MouseEvent) => {
-      if (!isDrawing.current) return;
-      const ctx = contextRef.current;
-      if (ctx) {
-        ctx.lineTo(
-          event.clientX + window.scrollX,
-          event.clientY + window.scrollY
-        );
-        ctx.stroke();
-      }
-    };
+    const offsetX = event.nativeEvent.offsetX;
+    const offsetY = event.nativeEvent.offsetY;
 
-    const handleStopDrawing = () => {
-      isDrawing.current = false;
-      const ctx = contextRef.current;
-      if (ctx) {
-        ctx.closePath();
-      }
-    };
+    context.lineTo(offsetX, offsetY);
+    context.stroke();
+  };
 
-    window.addEventListener("keydown", handleTextInput);
-    canvas.addEventListener("click", handleCanvasClick);
+  const finishDrawing = () => {
+    if (!contextRef.current) return;
 
-    canvas.addEventListener("mousedown", handleStartDrawing);
-    canvas.addEventListener("mousemove", handleDrawing);
-    canvas.addEventListener("mouseup", handleStopDrawing);
-    canvas.addEventListener("mouseout", handleStopDrawing);
-
-    return () => {
-      window.removeEventListener("keydown", handleTextInput);
-      canvas.removeEventListener("click", handleCanvasClick);
-
-      canvas.removeEventListener("mousedown", handleStartDrawing);
-      canvas.removeEventListener("mousemove", handleDrawing);
-      canvas.removeEventListener("mouseup", handleStopDrawing);
-      canvas.removeEventListener("mouseout", handleStopDrawing);
-    };
-  }, [mode, isTyping, inputValue, inputX, inputY]);
+    contextRef.current.closePath();
+    isDrawing.current = false;
+  };
 
   return (
     <canvas
@@ -134,6 +68,10 @@ const CanvasComponent: React.FC<CanvasProps> = ({ mode }) => {
         zIndex: -1,
         pointerEvents: "auto",
       }}
+      onMouseDown={startDrawing}
+      onMouseMove={draw}
+      onMouseUp={finishDrawing}
+      onMouseOut={finishDrawing}
     ></canvas>
   );
 };

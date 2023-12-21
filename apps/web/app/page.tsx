@@ -2,17 +2,17 @@
 
 import React, { useState } from "react";
 import CanvasComponent from "./components/Canvas";
+import Options from "./components/Options";
 
 type Props = {};
 
 const page = (props: Props) => {
-  const [mode, setMode] = useState<string>("draw");
+  const [mode, setMode] = useState<string>("");
 
   return (
     <div>
-      <button onClick={() => setMode("draw")}>Draw</button>
-      <button onClick={() => setMode("text")}>Text</button>
-      <CanvasComponent mode={mode} />{" "}
+      <Options setMode={setMode} />
+      <CanvasComponent />
     </div>
   );
 };
