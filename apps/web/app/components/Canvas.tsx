@@ -1,11 +1,13 @@
-"use client";
-
 import React, { useEffect, useRef } from "react";
 
-const CanvasComponent: React.FC = () => {
+interface ModeProps {
+  mode: string;
+}
+
+const CanvasComponent: React.FC<ModeProps> = ({ mode }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  let isDrawing = false;
+  const isDrawing = useRef<boolean>(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,28 +21,10 @@ const CanvasComponent: React.FC = () => {
 
     contextRef.current = context;
 
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth + window.scrollX;
-      canvas.height = window.innerHeight + window.scrollY;
-    };
-
     const startDrawing = (event: MouseEvent) => {
-      isDrawing = true;
-      draw(event);
-    };
-
-    const draw = (event: MouseEvent) => {
-      if (!isDrawing) return;
+      isDrawing.current = true;
       const ctx = contextRef.current;
       if (ctx) {
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.strokeStyle = "black";
-        ctx.lineTo(
-          event.clientX + window.scrollX,
-          event.clientY + window.scrollY
-        );
-        ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(
           event.clientX + window.scrollX,
@@ -49,42 +33,32 @@ const CanvasComponent: React.FC = () => {
       }
     };
 
-    const stopDrawing = () => {
-      isDrawing = false;
+    const draw = (event: MouseEvent) => {
+      if (!isDrawing.current) return;
       const ctx = contextRef.current;
       if (ctx) {
-        ctx.beginPath();
+        ctx.lineTo(
+          event.clientX + window.scrollX,
+          event.clientY + window.scrollY
+        );
+        ctx.stroke();
+      }
+    };
+
+    const stopDrawing = () => {
+      isDrawing.current = false;
+      const ctx = contextRef.current;
+      if (ctx) {
+        ctx.closePath();
       }
     };
 
     const handleResize = () => {
-      resizeCanvas();
-    };
-
-    const handleScroll = () => {
-      canvas.width += window.scrollX;
-      canvas.height += window.scrollY;
-
-      resizeCanvas();
-      redraw();
-    };
-
-    const redraw = () => {
-      const ctx = contextRef.current;
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        const visibleRect = {
-          x: 0,
-          y: 0,
-          width: window.innerWidth,
-          height: window.innerHeight,
-        };
-      }
+      canvas.width = window.innerWidth + window.scrollX;
+      canvas.height = window.innerHeight + window.scrollY;
     };
 
     window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleScroll);
 
     canvas.addEventListener("mousedown", startDrawing);
     canvas.addEventListener("mousemove", draw);
@@ -93,7 +67,6 @@ const CanvasComponent: React.FC = () => {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", handleScroll);
 
       canvas.removeEventListener("mousedown", startDrawing);
       canvas.removeEventListener("mousemove", draw);
@@ -105,7 +78,7 @@ const CanvasComponent: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      id="backgroundCanvas"
+      id="canvas"
       style={{
         position: "fixed",
         top: 0,

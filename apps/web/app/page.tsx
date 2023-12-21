@@ -1,12 +1,18 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import CanvasComponent from "./components/Canvas";
+import Toolbar from "./components/ToolBar";
 
 type Props = {};
 
 const page = (props: Props) => {
+  const [mode, setMode] = useState<string>("draw");
+
   return (
     <div>
-      <CanvasComponent />
+      <Toolbar setMode={setMode} />
+      <CanvasComponent mode={mode} />
     </div>
   );
 };
